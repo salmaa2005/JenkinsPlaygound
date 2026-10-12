@@ -4,22 +4,28 @@ pipeline {
 
     stages {
         stage('Terraform Init') {
-            steps {
-                sh 'terraform init'
-            }
+    steps {
+        dir('Day2_task2') { 
+            sh 'terraform init'
         }
+    }
+}
 
-        stage('Terraform Plan') {
-            steps {
-                sh 'terraform plan -out=tfplan'
-            }
+stage('Terraform Plan') {
+    steps {
+        dir('Day2_task2') {
+            sh 'terraform plan -out=tfplan'
         }
+    }
+}
 
-        stage('Terraform Apply') {
-            steps {
-                sh 'terraform apply -auto-approve tfplan'
-            }
+stage('Terraform Apply') {
+    steps {
+        dir('Day2_task2') {
+            sh 'terraform apply -auto-approve tfplan'
         }
+    }
+}
     }
 
     post {
