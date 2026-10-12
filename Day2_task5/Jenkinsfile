@@ -1,0 +1,47 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Check Ansible') {
+            steps {
+                sh 'ansible --version'
+            }
+        }
+
+        stage('Test SSH Connection') {
+            steps {
+                withCredentials([
+                    sshUserPrivateKey(
+                        credentialsId: 'host-ssh-key',
+                        keyFileVariable: 'SSH_KEY'
+                    )
+                ]) {
+                    sh '''
+                        ansible webservers \
+                            -i Day2_task5/inventory.ini \
+                            --private-key "$SSH_KEY" \
+                            -m ansible.builtin.ping
+                    '''
+                }
+            }
+        }
+
+        stage('Install and Configure Nginx') {
+            steps {
+                withCredentials([
+                    sshUserPrivateKey(
+                        credentialsId: 'host-ssh-key',
+                        keyFileVariable: 'SSH_KEY'
+                    )
+                ]) {
+                    sh '''
+                        ansible-playbook \
+                            -i Day2_task5/inventory.ini \
+                            --private-key "$SSH_KEY" \
+                            Day2_task5/install_nginx.yml
+                    '''
+                }
+            }
+        }
+    }
+}
