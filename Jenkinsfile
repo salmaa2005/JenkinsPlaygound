@@ -23,7 +23,7 @@ pipeline {
     }
     post {
         failure{
-            emailtext(
+            mail(
                 subject: "Jenkins Pipeline Failed: ${env.JOB_NAME}",
                 body: """
                     The Jenkins pipeline has failed.
