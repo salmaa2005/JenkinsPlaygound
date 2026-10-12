@@ -60,7 +60,7 @@ pipeline {
                         terraform show -no-color tfplan > plan.txt
                     '''
                     archiveArtifacts(
-                        artifacts: 'Day2_task4/plan.txt',
+                        artifacts: 'plan.txt',
                         fingerprint: true
                     )
                 }
