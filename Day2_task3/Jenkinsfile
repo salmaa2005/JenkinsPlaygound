@@ -1,0 +1,79 @@
+
+pipeline {
+    agent any
+
+    options {
+        disableConcurrentBuilds()
+    }
+
+    parameters {
+        choice(
+            name: 'ENVIRONMENT',
+            choices: ['dev', 'stg', 'prod'],
+            description: 'Choose the environment to deploy'
+        )
+    }
+
+    stages {
+        stage('Terraform Init') {
+            steps {
+                dir('Day2_task2') {
+                    sh 'terraform init'
+                }
+            }
+        }
+
+        stage('Select Workspace') {
+            steps {
+                dir('Day2_task2') {
+                    sh '''
+                        set -eu
+
+                        terraform workspace select "$ENVIRONMENT" \
+                          || terraform workspace new "$ENVIRONMENT"
+
+                        terraform workspace show
+                    '''
+                }
+            }
+        }
+
+        stage('Terraform Validate') {
+            steps {
+                dir('Day2_task2') {
+                    sh 'terraform validate'
+                }
+            }
+        }
+
+        stage('Terraform Plan') {
+            steps {
+                dir('Day2_task2') {
+                    sh '''
+                        terraform plan \
+                          -var-file="${ENVIRONMENT}.tfvars" \
+                          -out=tfplan
+                    '''
+                }
+            }
+        }
+
+        stage('Terraform Apply') {
+            steps {
+                dir('Day2_task2') {
+                    sh 'terraform apply -auto-approve tfplan'
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "VPC deployment successful for ${params.ENVIRONMENT}!"
+        }
+
+        failure {
+            echo "Terraform deployment failed for ${params.ENVIRONMENT}!"
+        }
+    }
+}
