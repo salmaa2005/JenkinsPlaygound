@@ -14,10 +14,10 @@ pipeline {
         }
         stage('Hello ITI') {
             steps {
-                sh```
+                sh'''
                 chmod +x hello.sh
                 ./hello.sh
-                ```
+                '''
             }
         }
     }
