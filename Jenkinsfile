@@ -14,7 +14,10 @@ pipeline {
         }
         stage('Hello ITI') {
             steps {
-                echo 'Hello ITI'
+                sh```
+                chmod +x hello.sh
+                ./hello.sh
+                ```
             }
         }
     }
