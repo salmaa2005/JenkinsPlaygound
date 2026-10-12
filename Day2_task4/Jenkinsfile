@@ -17,100 +17,96 @@ pipeline {
     stages {
         stage('Terraform Init') {
             steps {
-                sh 'terraform init'
+                dir('Day2_task4') {
+                    sh 'terraform init'
+                }
             }
         }
 
         stage('Select Workspace') {
             steps {
-                sh '''
-                    set -eu
+                dir('Day2_task4') {
+                    sh '''
+                        set -eu
 
-                    terraform workspace select "$ENVIRONMENT" \
-                      || terraform workspace new "$ENVIRONMENT"
+                        terraform workspace select "$ENVIRONMENT" \
+                          || terraform workspace new "$ENVIRONMENT"
 
-                    echo "Selected workspace:"
-                    terraform workspace show
-                '''
+                        echo "Selected workspace:"
+                        terraform workspace show
+                    '''
+                }
             }
         }
 
         stage('Terraform Validate') {
             steps {
-                sh 'terraform validate'
+                dir('Day2_task4') {
+                    sh 'terraform validate'
+                }
             }
         }
 
         stage('Terraform Plan') {
             steps {
-                sh '''
-                    set -eu
+                dir('Day2_task4') {
+                    sh '''
+                        set -eu
 
-                    terraform plan \
-                      -var-file="${ENVIRONMENT}.tfvars" \
-                      -out=tfplan
+                        terraform plan \
+                          -var-file="${ENVIRONMENT}.tfvars" \
+                          -out=tfplan
 
-                    terraform show -no-color tfplan > plan.txt
-                '''
+                        terraform show -no-color tfplan > plan.txt
+                    '''
 
-                archiveArtifacts(
-                    artifacts: 'plan.txt',
-                    fingerprint: true
-                )
-
-                echo 'Terraform plan generated. Waiting for review next.'
+                    archiveArtifacts(
+                        artifacts: 'Day2_task4/plan.txt',
+                        fingerprint: true
+                    )
+                }
             }
         }
 
         stage('Approval') {
             steps {
                 script {
-                    def approval = input(
+                    input(
                         id: 'TerraformApproval',
-                        message: """
-Review the Terraform plan for ${params.ENVIRONMENT}.
-
-Open the archived plan.txt artifact before approving.
-Approve only if the proposed changes are correct.
-                        """.stripIndent(),
+                        message: "Review the ${params.ENVIRONMENT} Terraform plan in the archived plan.txt artifact. Approve deployment?",
                         ok: 'Approve and Apply',
-                        submitter: 'admin',
-                        parameters: [
-                            text(
-                                name: 'APPROVAL_NOTE',
-                                defaultValue: '',
-                                description: 'Optional reason or approval note'
-                            )
-                        ]
+                        submitter: 'admin'
                     )
-
-                    echo "Approval received. Note: ${approval}"
                 }
             }
         }
 
         stage('Terraform Apply') {
             steps {
-                sh 'terraform apply -auto-approve tfplan'
+                dir('Day2_task4') {
+                    sh 'terraform apply -auto-approve tfplan'
+                }
             }
         }
     }
 
     post {
         success {
-            echo "Terraform deployment completed successfully for ${params.ENVIRONMENT}."
+            echo "Terraform deployment completed for ${params.ENVIRONMENT}."
         }
 
         aborted {
-            echo "Terraform deployment was aborted for ${params.ENVIRONMENT}."
+            echo "Deployment aborted for ${params.ENVIRONMENT}."
         }
 
         failure {
-            echo "Terraform deployment failed for ${params.ENVIRONMENT}."
+            echo "Deployment failed for ${params.ENVIRONMENT}."
         }
 
         always {
-            sh 'rm -f tfplan'
+            dir('Day2_task4') {
+                sh 'rm -f tfplan'
+            }
         }
     }
 }
